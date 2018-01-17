@@ -1,3 +1,4 @@
+
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #File: readfile.py
@@ -20,7 +21,12 @@ import re,os,sys
 # 获取指定函数的起始行和终止行
 # 起始行：00102FC4 sub_102FC4
 # 终止行: 00103BF8 End of function sub_102FC4
+
 def find_func_field(lines, func_name):
+    ''' 
+    函数汇编起始段: XXXX <func_name>
+    函数汇编结束段: XXXX End of function <func_name>
+    '''
     length = len(lines)
     start_pattern = re.compile("[0-9A-F]+ %s" % func_name)
     for start in range(length):
@@ -32,10 +38,13 @@ def find_func_field(lines, func_name):
         return 0,0
     return start,end
 
-# 根据loc_XXXX和BXX loc_XXXX分割汇编代码，形成基本代码块
-# 返回值: [块首行号,块尾行号,
-#            块首loc_XXXX信息(如果有), 块尾BXX loc_XXXX信息(如果有)]
+
 def split_func_field(lines, start, end):
+    '''
+    # 根据loc_XXXX和BXX loc_XXXX分割汇编代码，形成基本代码块
+    # 返回值: [块首行号,块尾行号,
+    #            块首loc_XXXX信息(如果有), 块尾BXX loc_XXXX信息(如果有)]
+    '''
     new_lines = lines[start:end]
     # 找出所有分割代码块的依据:loc_XXXX或locret_XXXX
     loc_list = []

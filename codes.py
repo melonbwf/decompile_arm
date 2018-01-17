@@ -9,6 +9,7 @@ class codes:
         self.nexts = list()
         self.ancestors = list()
         self.successors = list()
+        self.doms = set()
 
     def show(self):
         print(self.prevs, self.nexts, self.ancestors, self.successors)
@@ -22,6 +23,7 @@ class blockcodes(codes):
         self.end = end # 不包含end
 
     def show(self):
-        return "codes[%d,%d) prevs [%s] nexts [%s]" % (self.start, self.end,
+        return "codes[%d,%d) prevs [%s] nexts [%s] doms (%s)" % (self.start, self.end,
         ",".join([str(i) for i in self.prevs]),
-        ",".join([str(i) for i in self.nexts]))
+        ",".join([str(i) for i in self.nexts]),
+        ",".join([str(i) for i in self.doms]))
