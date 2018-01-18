@@ -88,6 +88,84 @@ def get_route_from_s_to_e(codes_list, s, e):
                 route.append(p)
                 stack.append(p)
     return stack 
+
+def get_loops(codes_list, N):
+    # 确保已经计算过doms
+    loops = []
+    for i in N:
+        pass        
+
+def debug_codes_list():
+    codes_list = []
+    #code_type = "while" #循环类型
+    code_type = "double_branch" #互交互分支
+    # 互交叉分支，两个结点的prevs都是两个且相同(依据这个来判断和处理)
+    if code_type == "while": #循环类型
+        codes_list.append(blockcodes(0,0)) # 0
+        codes_list.append(blockcodes(1,1)) # 1
+        codes_list.append(blockcodes(2,2)) # 2
+        codes_list.append(blockcodes(3,3)) # 3
+        codes_list.append(blockcodes(4,4)) # 4
+        # 添加nexts
+        codes_list[0].nexts.append(1)    
+        codes_list[1].nexts.append(2)
+        codes_list[1].nexts.append(3)
+        codes_list[2].nexts.append(1)
+        codes_list[2].nexts.append(4)
+        codes_list[3].nexts.append(1)
+        codes_list[3].nexts.append(4)
+    elif code_type == "double_branch": #互交互分支
+        codes_list.append(blockcodes(0,0)) # 0
+        codes_list.append(blockcodes(1,1)) # 1
+        codes_list.append(blockcodes(2,2)) # 2
+        codes_list.append(blockcodes(3,3)) # 3
+        codes_list.append(blockcodes(4,4)) # 4
+        codes_list.append(blockcodes(5,5)) # 5
+        # 添加nexts
+        codes_list[0].nexts.append(1)
+        codes_list[0].nexts.append(2)
+        codes_list[1].nexts.append(3)
+        codes_list[1].nexts.append(4)
+        codes_list[2].nexts.append(3)
+        codes_list[2].nexts.append(4)
+        codes_list[3].nexts.append(5)
+        codes_list[4].nexts.append(5)
+
+    compute_prevs(codes_list)
+    compute_ancestors_and_successors(codes_list)
+
+    return codes_list
+
+def compute_prevs(codes_list):
+    ''' 计算prevs '''
+    # 先清空
+    for codes in codes_list: codes.prevs.clear()
+    # 再计算
+    for num in range(len(codes_list)):
+        for n in codes_list[num].nexts:
+            if num not in codes_list[n].prevs:
+                codes_list[n].prevs.append(num)
+
+def compute_ancestors_and_successors(codes_list):
+    ''' 计算 ancestors, successors '''
+    # 先清空
+    for codes in codes_list:
+        codes.ancestors = set(codes.prevs)
+        codes.successors = set(codes.nexts)
+    change = True
+    while change:
+        change = False
+        for codes in codes_list:
+            for p in list(codes.ancestors):
+                for pp in codes_list[p].prevs:
+                    if pp not in codes.ancestors:
+                        codes.ancestors.add(pp)
+                        change = True
+            for n in list(codes.successors):
+                for nn in codes_list[n].nexts:
+                    if nn not in codes.successors:
+                        codes.successors.add(nn)
+                        change = True
                 
 def init_codes_list(file_name, func_name):
     ''' '''
@@ -123,7 +201,8 @@ def init_codes_list(file_name, func_name):
     # 计算prevs
     for num in range(len(codes_list)):
         for n in codes_list[num].nexts:
-            if num not in codes_list[n].prevs: codes_list[n].prevs.append(num)
+            if num not in codes_list[n].prevs:
+                codes_list[n].prevs.append(num)
 
     return codes_list
     
@@ -132,10 +211,23 @@ if __name__ == '__main__':
                 "example/loaddsp.lst")
     func_name = "sub_102FC4"
 
-    codes_list = init_codes_list(file_name, func_name)
-    compute_dom(codes_list, 0, [i for i in range(len(codes_list))])
+    debug = True
+    try: 
+        if debug:
+            codes_list = debug_codes_list()
+        else:
+            codes_list = init_codes_list(file_name, func_name)
+    except NameError:
+        codes_list = init_codes_list(file_name, func_name)
+
+    nums = [i for i in range(len(codes_list))]
+    top = unknowncodes(0, nums)
+    codes_list.append(top)
+    compute_dom(codes_list, 0, nums)
+
+    # dom&nexts不空,则存在回边
 
     for num in range(len(codes_list)):
         print("%d: %s" % (num, codes_list[num].show()))
 
-    print(get_route_from_s_to_e(codes_list, 0, 90))
+    #print(get_route_from_s_to_e(codes_list, 0, 3))
