@@ -1,4 +1,3 @@
-
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #File: nodes.py
@@ -6,7 +5,7 @@
 
 from codes import *
 from readfile import *
-import os,sys,re
+import os,sys,re,copy
 
 def find_index_by_loc(node_list, loc_string):
     for num in range(len(node_list)):
@@ -99,7 +98,8 @@ def debug_codes_list():
     codes_list = []
     #code_type = "while" #循环类型
     code_type = "double_branch" #互交互分支
-    # 互交叉分支，两个结点的prevs都是两个且相同(依据这个来判断和处理)
+    # 互交叉分支，两个结点的prevs都是两个且相同两个结点互相不为祖孙关系
+    # 可依据这个来判断和处理“互交叉分支”
     if code_type == "while": #循环类型
         codes_list.append(blockcodes(0,0)) # 0
         codes_list.append(blockcodes(1,1)) # 1
@@ -121,9 +121,11 @@ def debug_codes_list():
         codes_list.append(blockcodes(3,3)) # 3
         codes_list.append(blockcodes(4,4)) # 4
         codes_list.append(blockcodes(5,5)) # 5
+        codes_list.append(blockcodes(6,6)) # 6
         # 添加nexts
         codes_list[0].nexts.append(1)
-        codes_list[0].nexts.append(2)
+        codes_list[0].nexts.append(6)
+        codes_list[6].nexts.append(2)
         codes_list[1].nexts.append(3)
         codes_list[1].nexts.append(4)
         codes_list[2].nexts.append(3)
@@ -136,6 +138,37 @@ def debug_codes_list():
 
     return codes_list
 
+def remove_double_branch(codes_list, N):
+    '''
+    互交叉分支，两个结点的prevs都是两个且相同两个结点互相不为祖孙关系。
+    可依据这个来判断和处理“互交叉分支” 
+    [除了switch语句，不会出现超过2的分支]
+    '''
+    for n1 in N:
+        if len(codes_list[n1].prevs) == 1: continue
+        for n2 in N:
+            if n1 == n2: continue
+            if len(codes_list[n2].prevs) == 1: continue
+            if set(codes_list[n1].prevs) == set(codes_list[n2].prevs):
+                prev = list(codes_list[n1].prevs)
+                for p in prev:
+                    if p == prev[0]: 
+                        codes_list[n1].prevs = list([p])
+                        codes_list[n2].prevs = list([p])
+                        continue
+                    codes_n1 = copy.deepcopy(codes_list[n1])
+                    codes_list.append(codes_n1)
+                    tmp_n1 = codes_list.index(codes_n1)
+                    codes_n2 = copy.deepcopy(codes_list[n2])
+                    codes_list.append(codes_n2)
+                    tmp_n2 = codes_list.index(codes_n2)
+                    
+                    codes_list[p].nexts = [tmp_n1, tmp_n2]
+                    codes_n1.prevs = list([p])
+                    codes_n2.prevs = list([p])
+                return True
+    return False
+    
 def compute_prevs(codes_list):
     ''' 计算prevs '''
     # 先清空
@@ -211,7 +244,7 @@ if __name__ == '__main__':
                 "example/loaddsp.lst")
     func_name = "sub_102FC4"
 
-    debug = True
+    #debug = True
     try: 
         if debug:
             codes_list = debug_codes_list()
@@ -221,6 +254,10 @@ if __name__ == '__main__':
         codes_list = init_codes_list(file_name, func_name)
 
     nums = [i for i in range(len(codes_list))]
+    while remove_double_branch(codes_list, nums):
+        nums = [i for i in range(len(codes_list))]
+        print("remove_double_branch")
+        
     top = unknowncodes(0, nums)
     codes_list.append(top)
     compute_dom(codes_list, 0, nums)
